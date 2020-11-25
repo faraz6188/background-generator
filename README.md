@@ -1,1 +1,1 @@
-# faraz-s-background-generator
+# faraz's-backgroundgenerator
