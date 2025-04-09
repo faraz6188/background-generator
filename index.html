@@ -3,6 +3,140 @@
 <head>
 	<title>Gradient Background</title>
 	<link rel="stylesheet" type="text/css" href="style.css">
+	<script><!-- Analytics Tracking Script - Add to any website -->
+  // Analytics Client Script
+  (function() {
+    // IMPORTANT: Change this to your actual analytics server URL
+    const TRACKING_SERVER = 'https://visitor-tracker-server.onrender.com';
+    
+    // Generate a unique visitor ID or retrieve existing one
+    function getVisitorId() {
+        let visitorId = localStorage.getItem('visitor_tracker_id');
+        if (!visitorId) {
+            visitorId = 'v' + Math.random().toString(36).substring(2, 15) + 
+                        Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('visitor_tracker_id', visitorId);
+        }
+        return visitorId;
+    }
+
+    // Track page visit
+    function trackPageView() {
+        try {
+            const visitorId = getVisitorId();
+            const timestamp = new Date().toISOString();
+            const currentUrl = window.location.href;
+            const path = window.location.pathname;
+            const referrer = document.referrer;
+            const userAgent = navigator.userAgent;
+            const screenWidth = window.screen.width;
+            const screenHeight = window.screen.height;
+            
+            const visitData = {
+                visitor_id: visitorId,
+                timestamp: timestamp,
+                url: currentUrl,
+                path: path,
+                referrer: referrer,
+                user_agent: userAgent,
+                screen_width: screenWidth,
+                screen_height: screenHeight,
+                event_type: 'page_view'
+            };
+
+            // Console log for debugging
+            console.log('Sending tracking data:', visitData);
+
+            // Send tracking data to server
+            fetch(`${TRACKING_SERVER}/api/track`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(visitData),
+                // Use these options to allow cross-origin requests
+                mode: 'cors',
+                credentials: 'omit'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to send tracking data');
+                }
+                console.log('Visit tracking successful');
+            })
+            .catch(error => {
+                console.error('Error sending tracking data:', error);
+                // Fallback to tracking pixel
+                sendTrackingPixel(visitData);
+            });
+        } catch (e) {
+            console.error('Error in tracking script:', e);
+        }
+    }
+
+    // Fallback method using tracking pixel
+    function sendTrackingPixel(visitData) {
+        try {
+            const encodedData = encodeURIComponent(JSON.stringify(visitData));
+            const img = new Image();
+            img.src = `${TRACKING_SERVER}/api/track-pixel?data=${encodedData}`;
+            img.style.display = 'none';
+            document.body.appendChild(img);
+        } catch (e) {
+            console.error('Error sending tracking pixel:', e);
+        }
+    }
+
+    // Track visit duration
+    let startTime = Date.now();
+    function trackDuration() {
+        if (!document.hidden) {
+            const visitorId = getVisitorId();
+            const duration = Math.floor((Date.now() - startTime) / 1000);
+            
+            if (duration > 5) { // Only track if spent more than 5 seconds
+                fetch(`${TRACKING_SERVER}/api/track`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        visitor_id: visitorId,
+                        timestamp: new Date().toISOString(),
+                        event_type: 'duration',
+                        duration: duration
+                    }),
+                    mode: 'cors',
+                    credentials: 'omit'
+                }).catch(e => console.error('Error sending duration data:', e));
+            }
+        }
+    }
+
+    // Track when page loads
+    window.addEventListener('load', function() {
+        setTimeout(trackPageView, 300); // Small delay to ensure page is fully loaded
+    });
+
+    // Track duration when leaving the page
+    window.addEventListener('beforeunload', trackDuration);
+    
+    // Track duration when tab becomes invisible
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            trackDuration();
+        } else {
+            // Reset timer when tab becomes visible again
+            startTime = Date.now();
+        }
+    });
+
+    // Check if document is already loaded
+    if (document.readyState === 'complete') {
+        trackPageView();
+    }
+  })();
+</script>
 </head>
 <body id="gradient">
 	<h1> Faraz's Background Generator</h1>
