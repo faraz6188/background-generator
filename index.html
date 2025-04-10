@@ -7,7 +7,7 @@
 // Add this to your website to track visitors
 
 // Configuration
-const TRACKING_SERVER = "http://localhost:3000"; // Use your server address here
+const TRACKING_SERVER = "http://localhost:1000"; // Use your server address here
 const DEBUG = false; // Set to false in production
 
 // Generate a visitor ID or retrieve from storage
@@ -43,12 +43,6 @@ function trackPageView() {
     event_type: 'page_view'
   };
   
-  // For local testing - simulate real IPs
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    if (DEBUG) console.log('Local development - simulating real visitor data');
-    visitData._testIP = '8.8.8.8'; // Google DNS IP for testing
-  }
-
   if (DEBUG) console.log('Sending tracking data:', visitData);
 
   // Send tracking data using fetch API
@@ -102,11 +96,6 @@ function trackSessionDuration() {
     duration: duration
   };
   
-  // For local testing - simulate real IPs
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    durationData._testIP = '8.8.8.8'; // Google DNS IP for testing
-  }
-  
   // Use sendBeacon if available for more reliable sending during page unload
   if (navigator.sendBeacon) {
     const blob = new Blob([JSON.stringify(durationData)], {type: 'application/json'});
@@ -139,11 +128,6 @@ function setupDurationTracking() {
       duration: duration
     };
     
-    // For local testing - simulate real IPs
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      durationData._testIP = '8.8.8.8'; // Google DNS IP for testing
-    }
-    
     fetch(`${TRACKING_SERVER}/api/update-duration`, {
       method: 'POST',
       headers: {
@@ -174,11 +158,6 @@ function setupInteractionTracking() {
         element_text: event.target.innerText || '',
         element_href: event.target.tagName === 'A' ? event.target.href : ''
       };
-      
-      // For local testing - simulate real IPs
-      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        interactionData._testIP = '8.8.8.8'; // Google DNS IP for testing
-      }
       
       // Use fetch for interaction events
       fetch(`${TRACKING_SERVER}/api/track`, {
