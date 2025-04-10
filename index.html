@@ -8,7 +8,11 @@
 
 // Configuration
 const TRACKING_SERVER = "http://localhost:3000"; // Use your server address here
-const DEBUG = true; // Set to false in production
+// Analytics Tracking Script
+// Add this to your website to track visitors
+
+// Configuration
+const DEBUG = false; // Set to false in production
 
 // Generate a visitor ID or retrieve from storage
 function getVisitorId() {
@@ -21,6 +25,11 @@ function getVisitorId() {
   return visitorId;
 }
 
+// Detect browser language
+function getBrowserLanguage() {
+  return navigator.language || navigator.userLanguage || 'unknown';
+}
+
 // Track page view
 function trackPageView() {
   const visitorId = getVisitorId();
@@ -30,16 +39,23 @@ function trackPageView() {
     timestamp: new Date().toISOString(),
     url: window.location.href,
     path: window.location.pathname,
-    referrer: document.referrer,
+    referrer: document.referrer || 'direct',
     user_agent: navigator.userAgent,
     screen_width: window.screen.width,
     screen_height: window.screen.height,
+    language: getBrowserLanguage(),
     event_type: 'page_view'
   };
   
+  // For local testing - simulate real IPs
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    if (DEBUG) console.log('Local development - simulating real visitor data');
+    visitData._testIP = '8.8.8.8'; // Google DNS IP for testing
+  }
+
   if (DEBUG) console.log('Sending tracking data:', visitData);
-  
-  // Try the primary fetch method first
+
+  // Send tracking data using fetch API
   fetch(`${TRACKING_SERVER}/api/track`, {
     method: 'POST',
     headers: {
@@ -56,7 +72,7 @@ function trackPageView() {
     // Fallback to tracking pixel if fetch fails
     sendTrackingPixel(visitData);
   });
-  
+
   // Record session start time for duration tracking
   if (!sessionStorage.getItem('session_start')) {
     sessionStorage.setItem('session_start', Date.now().toString());
@@ -90,6 +106,11 @@ function trackSessionDuration() {
     duration: duration
   };
   
+  // For local testing - simulate real IPs
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    durationData._testIP = '8.8.8.8'; // Google DNS IP for testing
+  }
+  
   // Use sendBeacon if available for more reliable sending during page unload
   if (navigator.sendBeacon) {
     const blob = new Blob([JSON.stringify(durationData)], {type: 'application/json'});
@@ -103,15 +124,95 @@ function trackSessionDuration() {
   }
 }
 
+// Update session duration periodically
+function setupDurationTracking() {
+  // Send duration update every 30 seconds
+  setInterval(() => {
+    const sessionStart = parseInt(sessionStorage.getItem('session_start') || '0');
+    if (!sessionStart) return;
+    
+    const duration = Math.floor((Date.now() - sessionStart) / 1000); // duration in seconds
+    const visitorId = getVisitorId();
+    
+    const durationData = {
+      visitor_id: visitorId,
+      timestamp: new Date().toISOString(),
+      url: window.location.href,
+      path: window.location.pathname,
+      event_type: 'session_duration',
+      duration: duration
+    };
+    
+    // For local testing - simulate real IPs
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      durationData._testIP = '8.8.8.8'; // Google DNS IP for testing
+    }
+    
+    fetch(`${TRACKING_SERVER}/api/update-duration`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(durationData),
+      mode: 'cors'
+    }).catch(error => {
+      if (DEBUG) console.log('Error sending duration data:', error);
+    });
+  }, 30000); // Update every 30 seconds
+}
+
+// Track user interactions (clicks)
+function setupInteractionTracking() {
+  document.addEventListener('click', function(event) {
+    // Only track clicks on links and buttons
+    if (event.target.tagName === 'A' || event.target.tagName === 'BUTTON') {
+      const interactionData = {
+        visitor_id: getVisitorId(),
+        timestamp: new Date().toISOString(),
+        url: window.location.href,
+        path: window.location.pathname,
+        event_type: 'interaction',
+        element_type: event.target.tagName.toLowerCase(),
+        element_id: event.target.id || '',
+        element_class: event.target.className || '',
+        element_text: event.target.innerText || '',
+        element_href: event.target.tagName === 'A' ? event.target.href : ''
+      };
+      
+      // For local testing - simulate real IPs
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        interactionData._testIP = '8.8.8.8'; // Google DNS IP for testing
+      }
+      
+      // Use fetch for interaction events
+      fetch(`${TRACKING_SERVER}/api/track`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(interactionData),
+        mode: 'cors'
+      }).catch(error => {
+        if (DEBUG) console.log('Error sending interaction data:', error);
+      });
+    }
+  });
+}
+
 // Initialize tracking
 document.addEventListener('DOMContentLoaded', function() {
   // Track initial page view
   trackPageView();
   
+  // Set up periodic duration tracking
+  setupDurationTracking();
+  
+  // Set up interaction tracking
+  setupInteractionTracking();
+  
   // Track when user leaves the page
   window.addEventListener('beforeunload', trackSessionDuration);
-});</script>
-</head>
+});</script></head>
 <body id="gradient">
 	<h1>Faraz's Background Generator</h1>
 	<input class="color1" type="color" name="color1" value="#00ff00">
