@@ -3,90 +3,130 @@
 <head>
 	<title>Gradient Background</title>
 	<link rel="stylesheet" type="text/css" href="style.css">
-<script>// Analytics Client Script
-(function() {
-  // IMPORTANT: Change this to your local analytics server URL
-//  const TRACKING_SERVER = 'http://localhost:10000';
-  const TRACKING_SERVER = 'http://your-local-ip:10000';
-  // Generate a unique visitor ID or retrieve existing one
-  function getVisitorId() {
-      let visitorId = localStorage.getItem('visitor_tracker_id');
-      if (!visitorId) {
-          visitorId = 'v' + Math.random().toString(36).substring(2, 15) + 
-                      Math.random().toString(36).substring(2, 15);
-          localStorage.setItem('visitor_tracker_id', visitorId);
-      }
-      return visitorId;
-  }
-
-  // Track page visit
-  function trackPageView() {
-      try {
-          const visitorId = getVisitorId();
-          const timestamp = new Date().toISOString();
-          const currentUrl = window.location.href;
-          const path = window.location.pathname;
-          const referrer = document.referrer;
-          const userAgent = navigator.userAgent;
-          const screenWidth = window.screen.width;
-          const screenHeight = window.screen.height;
-          
-          const visitData = {
-              visitor_id: visitorId,
-              timestamp: timestamp,
-              url: currentUrl,
-              path: path,
-              referrer: referrer,
-              user_agent: userAgent,
-              screen_width: screenWidth,
-              screen_height: screenHeight,
-              event_type: 'page_view'
-          };
-
-          // Console log for debugging
-          console.log('Sending tracking data:', visitData);
-
-          // Send tracking data to server
-          fetch(`${TRACKING_SERVER}/api/track`, {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(visitData),
-              // Use these options to allow cross-origin requests
-              mode: 'cors',
-              credentials: 'omit'
-          })
-          .then(response => {
-              if (!response.ok) {
-                  throw new Error('Failed to send tracking data');
-              }
-              console.log('Visit tracking successful');
-          })
-          .catch(error => {
-              console.error('Error sending tracking data:', error);
-              // Fallback to tracking pixel
-              sendTrackingPixel(visitData);
-          });
-      } catch (e) {
-          console.error('Error in tracking script:', e);
-      }
-  }
-
-  // Rest of the tracking code remains the same...</script>
+	<script>
+		// Analytics Client Script
+		(function() {
+		  // IMPORTANT: Change this to your actual analytics server URL
+		  const TRACKING_SERVER = 'http://localhost:1000';
+		  
+		  // Generate a unique visitor ID or retrieve existing one
+		  function getVisitorId() {
+		      let visitorId = localStorage.getItem('visitor_tracker_id');
+		      if (!visitorId) {
+		          visitorId = 'v' + Math.random().toString(36).substring(2, 15) + 
+		                      Math.random().toString(36).substring(2, 15);
+		          localStorage.setItem('visitor_tracker_id', visitorId);
+		      }
+		      return visitorId;
+		  }
+		  
+		  // Send tracking data using a pixel image (fallback method)
+		  function sendTrackingPixel(visitData) {
+		      const pixelUrl = `${TRACKING_SERVER}/api/track-pixel?data=${encodeURIComponent(JSON.stringify(visitData))}`;
+		      const img = new Image();
+		      img.src = pixelUrl;
+		      img.style.display = 'none';
+		      document.body.appendChild(img);
+		      console.log('Fallback to tracking pixel');
+		  }
+		  
+		  // Track page visit
+		  function trackPageView() {
+		      try {
+		          const visitorId = getVisitorId();
+		          const timestamp = new Date().toISOString();
+		          const currentUrl = window.location.href;
+		          const path = window.location.pathname;
+		          const referrer = document.referrer;
+		          const userAgent = navigator.userAgent;
+		          const screenWidth = window.screen.width;
+		          const screenHeight = window.screen.height;
+		          
+		          const visitData = {
+		              visitor_id: visitorId,
+		              timestamp: timestamp,
+		              url: currentUrl,
+		              path: path,
+		              referrer: referrer,
+		              user_agent: userAgent,
+		              screen_width: screenWidth,
+		              screen_height: screenHeight,
+		              event_type: 'page_view'
+		          };
+		          
+		          // Console log for debugging
+		          console.log('Sending tracking data:', visitData);
+		          
+		          // Send tracking data to server
+		          fetch(`${TRACKING_SERVER}/api/track`, {
+		              method: 'POST',
+		              headers: {
+		                  'Content-Type': 'application/json'
+		              },
+		              body: JSON.stringify(visitData),
+		              // Use these options to allow cross-origin requests
+		              mode: 'cors',
+		              credentials: 'omit'
+		          })
+		          .then(response => {
+		              if (!response.ok) {
+		                  throw new Error('Failed to send tracking data');
+		              }
+		              console.log('Visit tracking successful');
+		          })
+		          .catch(error => {
+		              console.error('Error sending tracking data:', error);
+		              // Fallback to tracking pixel
+		              sendTrackingPixel(visitData);
+		          });
+		      } catch (e) {
+		          console.error('Error in tracking script:', e);
+		      }
+		  }
+		  
+		  // Track the page view when the page loads
+		  window.addEventListener('load', trackPageView);
+		  
+		  // Also expose the tracking function globally if you want to track events
+		  window.trackAnalyticsEvent = function(eventType, eventData) {
+		      const baseData = {
+		          visitor_id: getVisitorId(),
+		          timestamp: new Date().toISOString(),
+		          url: window.location.href,
+		          path: window.location.pathname,
+		          user_agent: navigator.userAgent,
+		          event_type: eventType
+		      };
+		      
+		      const mergedData = {...baseData, ...eventData};
+		      
+		      // Send event data
+		      fetch(`${TRACKING_SERVER}/api/track`, {
+		          method: 'POST',
+		          headers: {
+		              'Content-Type': 'application/json'
+		          },
+		          body: JSON.stringify(mergedData),
+		          mode: 'cors',
+		          credentials: 'omit'
+		      })
+		      .catch(error => {
+		          console.error('Error sending event data:', error);
+		          sendTrackingPixel(mergedData);
+		      });
+		  };
+		})();
+	</script>
 </head>
 <body id="gradient">
-	<h1> Faraz's Background Generator</h1>
+	<h1>Faraz's Background Generator</h1>
 	<input class="color1" type="color" name="color1" value="#00ff00">
 	<input class="color2" type="color" name="color2" value="#ff0000">
 	<h2>Current CSS Background</h2>
 	<h3></h3>
 	<footer>
-		
-		<h6> Faraz's Copyright&copy;2020
-		</h6>
-		<footer>
-			<script type="text/javascript" src="script.js"></script>
-	</body>
-
-
+		<h6>Faraz's Copyright&copy;2020</h6>
+	</footer>
+	<script type="text/javascript" src="script.js"></script>
+</body>
+</html>
