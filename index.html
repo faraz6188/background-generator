@@ -8,10 +8,6 @@
 
 // Configuration
 const TRACKING_SERVER = "http://localhost:3000"; // Use your server address here
-// Analytics Tracking Script
-// Add this to your website to track visitors
-
-// Configuration
 const DEBUG = false; // Set to false in production
 
 // Generate a visitor ID or retrieve from storage
@@ -212,7 +208,8 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Track when user leaves the page
   window.addEventListener('beforeunload', trackSessionDuration);
-});</script></head>
+});</script>
+</head>
 <body id="gradient">
 	<h1>Faraz's Background Generator</h1>
 	<input class="color1" type="color" name="color1" value="#00ff00">
